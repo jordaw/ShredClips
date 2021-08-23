@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane id="AnchorPane" fx:id="anchorId" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ShredClips.Controller">
+    <children>
+        <ImageView fitHeight="412.0" fitWidth="384.0" layoutX="108.0" layoutY="108.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../logo.png" />
+            </image>
+        </ImageView>
+        <Button fx:id="sourceButton" layoutX="525.0" layoutY="23.0" mnemonicParsing="false" onAction="#sourcePathChoice" prefHeight="25.0" prefWidth="61.0" text="Browse" />
+        <TextField fx:id="sourceField" layoutX="14.0" layoutY="23.0" prefHeight="25.0" prefWidth="504.0" />
+        <Label layoutX="18.0" layoutY="6.0" prefHeight="17.0" prefWidth="149.0" text="Source Directory" />
+      <Button fx:id="destButton" layoutX="525.0" layoutY="76.0" mnemonicParsing="false" onAction="#destPathChoice" prefHeight="25.0" prefWidth="61.0" text="Browse" />
+      <TextField fx:id="destField" layoutX="14.0" layoutY="76.0" prefHeight="25.0" prefWidth="504.0" />
+      <Label layoutX="18.0" layoutY="58.0" prefHeight="17.0" prefWidth="149.0" text="Destination Directory" />
+      <ListView fx:id="sourceList" onMouseClicked="#handleSourceMouseClick" layoutX="14.0" layoutY="123.0" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <ListView fx:id="destList" onMouseClicked="#handleDestMouseClick" layoutX="14.0" layoutY="358.0" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <ButtonBar layoutX="12.0" layoutY="323.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
+        <buttons>
+          <Button alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" prefHeight="25.0" text="Delete" />
+            <Button minWidth="66.0" mnemonicParsing="false" prefHeight="25.0" text="Move" />
+        </buttons>
+      </ButtonBar>
+      <ButtonBar buttonMinWidth="95.0" layoutX="179.0" layoutY="523.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="400.0">
+        <buttons>
+            <Button mnemonicParsing="false" text="Pause" />
+            <Button mnemonicParsing="false" text="Play" />
+            <Button mnemonicParsing="false" text="Forward" />
+          <Button mnemonicParsing="false" text="Backward" />
+        </buttons>
+      </ButtonBar>
+    </children>
+</AnchorPane>
