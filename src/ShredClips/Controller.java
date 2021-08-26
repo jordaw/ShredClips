@@ -28,14 +28,19 @@ public class Controller implements Initializable {
     private TextField sourceField;
 
     @FXML
+    private Label invalidSource;
+
+    @FXML
     private TextField destField;
+
+    @FXML
+    private Label invalidDest;
 
     @FXML
     private ListView<String> sourceList;
 
     @FXML
     private ListView<String> destList;
-
 
     /**
      * Initializes the DirectoryChooser object, gets the current stage,
@@ -53,7 +58,35 @@ public class Controller implements Initializable {
         File file = dirChooser.showDialog(stage);
         if(file != null){
             sourceField.setText(file.getAbsolutePath());
+            sourceField.setStyle(null);
+            invalidSource.setVisible(false);
             sourceFileDisplay(file);
+        }
+    }
+
+    /**
+     * Detects change to the source directory TextField. Determines
+     * if the entered path is a valid directory or not. If true,
+     * updates fx:id="sourceList". If false, highlights the TextField red
+     * and displays "invalid source directory" in fx:id="sourceList"
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the Enter button on their keyboard after
+     *                  clicking fx:id="sourceField"
+     *
+     */
+    @FXML
+    public void sourceFieldChange(ActionEvent event){
+        File file = new File(sourceField.getCharacters().toString());
+        if(file.isDirectory()){
+            sourceField.setStyle(null);
+            invalidSource.setVisible(false);
+            sourceFileDisplay(file);
+        }
+        else{
+            sourceField.setStyle("-fx-text-box-border: red ; -fx-focus-color: red ;");
+            invalidSource.setVisible(true);
+            sourceList.getItems().clear();
         }
     }
 
@@ -73,7 +106,35 @@ public class Controller implements Initializable {
         File file = dirChooser.showDialog(stage);
         if(file != null){
             destField.setText(file.getAbsolutePath());
+            destField.setStyle(null);
+            invalidDest.setVisible(false);
             destFileDisplay(file);
+        }
+    }
+
+    /**
+     * Detects change to the destination directory TextField. Determines
+     * if the entered path is a valid directory or not. If true,
+     * updates fx:id="destList". If false, highlights the TextField red
+     * and displays "invalid destination directory" in fx:id="destList"
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the Enter button on their keyboard after
+     *                  clicking fx:id="destField"
+     *
+     */
+    @FXML
+    public void destFieldChange(ActionEvent event){
+        File file = new File(destField.getCharacters().toString());
+        if(file.isDirectory()){
+            destField.setStyle(null);
+            invalidDest.setVisible(false);
+            destFileDisplay(file);
+        }
+        else{
+            destField.setStyle("-fx-text-box-border: red ; -fx-focus-color: red ;");
+            invalidDest.setVisible(true);
+            destList.getItems().clear();
         }
     }
 
@@ -86,6 +147,7 @@ public class Controller implements Initializable {
      *
      */
     public void sourceFileDisplay(File file) {
+        sourceList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
         String[] filenames = file.list();
         if(!(filenames == null)) {
@@ -116,6 +178,7 @@ public class Controller implements Initializable {
      *
      */
     public void destFileDisplay(File file) {
+        destList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
         String[] filenames = file.list();
         if (!(filenames == null)) {

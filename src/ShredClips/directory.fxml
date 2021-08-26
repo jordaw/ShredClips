@@ -17,13 +17,15 @@
             </image>
         </ImageView>
         <Button fx:id="sourceButton" layoutX="525.0" layoutY="23.0" mnemonicParsing="false" onAction="#sourcePathChoice" prefHeight="25.0" prefWidth="61.0" text="Browse" />
-        <TextField fx:id="sourceField" layoutX="14.0" layoutY="23.0" prefHeight="25.0" prefWidth="504.0" />
+        <TextField fx:id="sourceField" layoutX="14.0" layoutY="23.0" onAction="#sourceFieldChange" prefHeight="25.0" prefWidth="504.0" />
         <Label layoutX="18.0" layoutY="6.0" prefHeight="17.0" prefWidth="149.0" text="Source Directory" />
       <Button fx:id="destButton" layoutX="525.0" layoutY="76.0" mnemonicParsing="false" onAction="#destPathChoice" prefHeight="25.0" prefWidth="61.0" text="Browse" />
-      <TextField fx:id="destField" layoutX="14.0" layoutY="76.0" prefHeight="25.0" prefWidth="504.0" />
+      <TextField fx:id="destField" layoutX="14.0" layoutY="76.0" onAction="#destFieldChange" prefHeight="25.0" prefWidth="504.0" />
       <Label layoutX="18.0" layoutY="58.0" prefHeight="17.0" prefWidth="149.0" text="Destination Directory" />
-      <ListView fx:id="sourceList" onMouseClicked="#handleSourceMouseClick" layoutX="14.0" layoutY="123.0" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
-      <ListView fx:id="destList" onMouseClicked="#handleDestMouseClick" layoutX="14.0" layoutY="358.0" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <ListView fx:id="sourceList" layoutX="14.0" layoutY="123.0" onMouseClicked="#handleSourceMouseClick" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <Label fx:id="invalidSource" layoutX="55.0" layoutY="206.0" text="Invalid Source&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
+      <ListView fx:id="destList" layoutX="14.0" layoutY="358.0" onMouseClicked="#handleDestMouseClick" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <Label fx:id="invalidDest" layoutX="43.0" layoutY="441.0" text="Invalid Destination&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
       <ButtonBar layoutX="12.0" layoutY="323.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
         <buttons>
           <Button alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" prefHeight="25.0" text="Delete" />
