@@ -26,6 +26,7 @@ public class Main extends Application {
         primaryStage.setTitle("ShredClips");
         primaryStage.getIcons().add(new Image("icon.png"));
         primaryStage.setScene(new Scene(root));
+        primaryStage.setResizable(false);
         primaryStage.show();
     }
 
