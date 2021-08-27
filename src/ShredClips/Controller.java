@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 import javafx.stage.DirectoryChooser;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import org.jetbrains.annotations.NotNull;
 
 public class Controller implements Initializable {
 
@@ -76,7 +77,7 @@ public class Controller implements Initializable {
      *
      */
     @FXML
-    public void sourceFieldChange(ActionEvent event){
+    private void sourceFieldChange(ActionEvent event) {
         File file = new File(sourceField.getCharacters().toString());
         if(file.isDirectory()){
             sourceField.setStyle(null);
@@ -124,7 +125,7 @@ public class Controller implements Initializable {
      *
      */
     @FXML
-    public void destFieldChange(ActionEvent event){
+    private void destFieldChange(ActionEvent event) {
         File file = new File(destField.getCharacters().toString());
         if(file.isDirectory()){
             destField.setStyle(null);
@@ -146,14 +147,12 @@ public class Controller implements Initializable {
      *                  function
      *
      */
-    public void sourceFileDisplay(File file) {
+    private void sourceFileDisplay(@NotNull File file) {
         sourceList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
         String[] filenames = file.list();
-        if(!(filenames == null)) {
-            for (String filename : filenames) {
-                sourceList.getItems().add(filename);
-            }
+        for (String filename : filenames) {
+            sourceList.getItems().add(filename);
         }
     }
 
@@ -177,14 +176,12 @@ public class Controller implements Initializable {
      *                  utilized for ListView population
      *
      */
-    public void destFileDisplay(File file) {
+    private void destFileDisplay(@NotNull File file) {
         destList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
         String[] filenames = file.list();
-        if (!(filenames == null)) {
-            for (String filename : filenames) {
-                destList.getItems().add(filename);
-            }
+        for (String filename : filenames) {
+            destList.getItems().add(filename);
         }
     }
 
