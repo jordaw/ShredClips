@@ -28,8 +28,8 @@
       <Label fx:id="invalidDest" layoutX="43.0" layoutY="441.0" text="Invalid Destination&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
       <ButtonBar layoutX="12.0" layoutY="323.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
         <buttons>
-          <Button alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" prefHeight="25.0" text="Delete" />
-            <Button minWidth="66.0" mnemonicParsing="false" prefHeight="25.0" text="Move" />
+          <Button fx:id="deleteFile" alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" onAction="#deleteFileHandle" prefHeight="25.0" text="Delete" />
+            <Button fx:id="moveFile" minWidth="66.0" mnemonicParsing="false" onAction="#moveFileHandle" prefHeight="25.0" text="Move" />
         </buttons>
       </ButtonBar>
       <ButtonBar buttonMinWidth="95.0" layoutX="179.0" layoutY="523.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="400.0">
