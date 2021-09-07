@@ -21,7 +21,7 @@ public class Main extends Application {
      *
      */
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("directory.fxml"));
         primaryStage.setTitle("ShredClips");
         primaryStage.getIcons().add(new Image("icon.png"));
@@ -37,7 +37,5 @@ public class Main extends Application {
      *               method that is inherited from the Application parent
      *               class.
      */
-    public static void main(String[] args) {
-        launch(args);
-    }
+    public static void main(String[] args) { launch(args); }
 }

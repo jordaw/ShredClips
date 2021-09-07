@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 /**Event*/
 import javafx.event.ActionEvent;
@@ -53,6 +55,9 @@ public class Controller implements Initializable {
     @FXML
     private ListView<String> destList;
 
+    @FXML
+    private ListView<LogItem> logList;
+
     /**
      * Initializes the DirectoryChooser object, gets the current stage,
      * retrieves the chosen user source path, and displays it in the
@@ -67,10 +72,11 @@ public class Controller implements Initializable {
         final DirectoryChooser dirChooser = new DirectoryChooser();
         Stage stage = (Stage) anchorId.getScene().getWindow();
         File file = dirChooser.showDialog(stage);
-        if(file != null){
+        if(file != null) {
             sourceField.setText(file.getAbsolutePath());
             sourceListValid();
             sourceFileDisplay(file);
+            logAdd("Source Directory Change: " + file.getAbsolutePath(), "Source");
         }
     }
 
@@ -88,11 +94,11 @@ public class Controller implements Initializable {
     @FXML
     private void sourceFieldChange(ActionEvent event) {
         File file = new File(sourceField.getCharacters().toString());
-        if(file.isDirectory()){
+        if(file.isDirectory()) {
             sourceListValid();
             sourceFileDisplay(file);
-        }
-        else{
+            logAdd("Source Directory Change: " + file.getAbsolutePath(), "Source");
+        } else {
             sourceListInvalid();
         }
     }
@@ -111,10 +117,11 @@ public class Controller implements Initializable {
         final DirectoryChooser dirChooser = new DirectoryChooser();
         Stage stage = (Stage) anchorId.getScene().getWindow();
         File file = dirChooser.showDialog(stage);
-        if(file != null){
+        if(file != null) {
             destField.setText(file.getAbsolutePath());
             destListValid();
             destFileDisplay(file);
+            logAdd("Destination Directory Change: " + file.getAbsolutePath(), "Destination");
         }
     }
 
@@ -132,11 +139,11 @@ public class Controller implements Initializable {
     @FXML
     private void destFieldChange(ActionEvent event) {
         File file = new File(destField.getCharacters().toString());
-        if(file.isDirectory()){
+        if(file.isDirectory()) {
             destListValid();
             destFileDisplay(file);
-        }
-        else{
+            logAdd("Destination Directory Change: " + file.getAbsolutePath(), "Destination");
+        } else {
             destListInvalid();
         }
     }
@@ -152,9 +159,8 @@ public class Controller implements Initializable {
     private void sourceFileDisplay(@NotNull File file) {
         sourceList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
-        String[] filenames = file.list();
-        for (String filename : filenames) {
-            sourceList.getItems().add(filename);
+        for (String fileName : file.list()) {
+            sourceList.getItems().add(fileName);
         }
     }
 
@@ -182,9 +188,8 @@ public class Controller implements Initializable {
     private void destFileDisplay(@NotNull File file) {
         destList.getItems().clear();
         System.out.println(Arrays.toString(file.list()));
-        String[] filenames = file.list();
-        for (String filename : filenames) {
-            destList.getItems().add(filename);
+        for (String fileName : file.list()) {
+            destList.getItems().add(fileName);
         }
     }
 
@@ -216,13 +221,13 @@ public class Controller implements Initializable {
             String from = sourceField.getCharacters().toString();
             String to = destField.getCharacters().toString();
             String file = sourceList.getSelectionModel().getSelectedItem();
-            moveLogic(from, to, file, "source");
+            moveLogic(from, to, file);
         }
         if(!destList.getSelectionModel().isEmpty()) {
             String from = destField.getCharacters().toString();
             String to = sourceField.getCharacters().toString();
             String file = destList.getSelectionModel().getSelectedItem();
-            moveLogic(from, to, file, "dest");
+            moveLogic(from, to, file);
         }
     }
 
@@ -235,11 +240,9 @@ public class Controller implements Initializable {
      * @param  fromPath     Directory the object is moving from
      * @param  toPath       Directory the object is moving to
      * @param  fileName     Name of the object
-     * @param  type         Whether the object was selected in the
-     *                      source ListView or destination ListView
      *
      */
-    private void moveLogic(String fromPath, String toPath, String fileName, String type) {
+    private void moveLogic(String fromPath, String toPath, String fileName) {
         if(!toPath.isEmpty()) {
             File fromFile = new File(fromPath);
             File toFile = new File(toPath);
@@ -251,15 +254,15 @@ public class Controller implements Initializable {
                     to = FileSystems.getDefault().getPath(toPath + "\\" + rename);
                     Dialog dialog = dialogWindow("ShredClips Alert", "Renamed file to " + rename, "caution");
                     dialog.showAndWait();
-                    moveFile(from, to);
+                    moveFile(from, to, fileName);
                 } else if (to.toFile().isDirectory()) {
                     String rename = directoryRename(toPath, fileName);
                     to = FileSystems.getDefault().getPath(toPath + "\\" + rename);
                     Dialog dialog = dialogWindow("ShredClips Alert", "Renamed directory to " + rename, "caution");
                     dialog.showAndWait();
-                    moveFile(from, to);
+                    moveFile(from, to, fileName);
                 } else if (!from.equals(to)) {
-                    moveFile(from, to);
+                    moveFile(from, to, fileName);
                 } else {
                     Dialog dialog = dialogWindow("ShredClips Alert", "Cannot move selected file to the same directory.", "caution");
                     dialog.showAndWait();
@@ -281,13 +284,13 @@ public class Controller implements Initializable {
      * @param  to       Path to the directory the file will be moved to
      *
      */
-    private void moveFile(Path from, Path to) {
+    private void moveFile(Path from, Path to, String fileName) {
         if(from.toFile().isFile()) {
              try {
                 Files.move(from, to);
+                logAdd("Moved File: " + fileName + " To " + to.toFile().getAbsolutePath(), "Move");
                 refreshListViews();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -296,6 +299,7 @@ public class Controller implements Initializable {
             Optional<ButtonType> choice = dialog.showAndWait();
             if(choice.get() == ButtonType.YES) {
                 new File (from.toString()).renameTo(new File(to.toString()));
+                logAdd("Moved Directory: " + fileName + " To " + to.toFile().getAbsolutePath(), "Move");
                 refreshListViews();
             }
         }
@@ -351,7 +355,7 @@ public class Controller implements Initializable {
             rename = dirName + "_" + i;
             newpath = FileSystems.getDefault().getPath(dirDirectory + "\\" + rename);
             exists = newpath.toFile().exists();
-            if(!exists){
+            if(!exists) {
                 return rename;
             }
             i++;
@@ -369,12 +373,12 @@ public class Controller implements Initializable {
      */
     @FXML
     private void deleteFileHandle(ActionEvent event) {
-        if(!sourceList.getSelectionModel().isEmpty()){
+        if(!sourceList.getSelectionModel().isEmpty()) {
             String path = sourceField.getCharacters().toString();
             String file = sourceList.getSelectionModel().getSelectedItem();
             deleteLogic(path, file, "source");
         }
-        if(!destList.getSelectionModel().isEmpty()) {
+        if (!destList.getSelectionModel().isEmpty()) {
             Path p = FileSystems.getDefault().getPath(destField.getCharacters().toString()+"\\"+destList.getSelectionModel().getSelectedItem());
             String path = destField.getCharacters().toString();
             String file = destList.getSelectionModel().getSelectedItem();
@@ -395,12 +399,12 @@ public class Controller implements Initializable {
      *
      */
     private void deleteLogic(String path, String fileName, String type) {
-        if(!path.isEmpty()) {
+        if (!path.isEmpty()) {
             File delFile = new File(path);
             if (delFile.isDirectory()) {
                 Path delPath = FileSystems.getDefault().getPath(path + "\\" + fileName);
                 if (delPath.toFile().isFile() || delPath.toFile().isDirectory()) {
-                    deleteFile(delPath);
+                    deleteFile(delPath, fileName);
                 }
             } else {
                 refreshListViews();
@@ -416,34 +420,37 @@ public class Controller implements Initializable {
      * Depending on OS is able to move file or directory to the
      * recycling bin.
      *
-     * @param  p     Path to the file getting deleted
+     * @param  p            Path to the file getting deleted
+     * @param  fileName     Name of the object
      *
      */
-    private void deleteFile(Path p) {
-        if(p.toFile().isFile()) {
+    private void deleteFile(Path p, String fileName) {
+        if (p.toFile().isFile()) {
             Dialog dialog = dialogWindow("ShredClips Delete Warning", "Are you sure you want to delete this file?", "warning");
 
             Optional<ButtonType> choice = dialog.showAndWait();
             if (choice.get() == ButtonType.YES) {
                 try {
                     Desktop.getDesktop().moveToTrash(p.toFile());
+                    logAdd("Moved File: " + fileName + " To Recycle Bin", "Delete");
                 } catch (Exception e) {
+                    p.toFile().delete();
+                    logAdd("Deleted File: " + fileName, "Delete");
                     e.printStackTrace();
                 }
-                p.toFile().delete();
                 refreshListViews();
             }
         }
-        if(p.toFile().isDirectory()) {
+        if (p.toFile().isDirectory()) {
             Dialog dialog = dialogWindow("ShredClips Delete Warning", "Are you sure you want to delete this folder?", "warning");
 
             Optional<ButtonType> choice = dialog.showAndWait();
-            if(choice.get() == ButtonType.YES){
+            if (choice.get() == ButtonType.YES){
                 try {
                     Desktop.getDesktop().moveToTrash(p.toFile());
+                    logAdd("Moved Directory: " + fileName + " To Recycle Bin", "Delete");
                 } catch (Exception e) {
-                    Dialog caution = dialogWindow("ShredClips Delete Warning", "Could not safely delete the folder", "caution");
-                    caution.showAndWait();
+                    logAdd("Could not safely delete the folder: " + fileName, "Error");
                     e.printStackTrace();
                 }
                 refreshListViews();
@@ -461,7 +468,7 @@ public class Controller implements Initializable {
      *
      */
     private Dialog dialogWindow(String title, String content, String choice) {
-        try{
+        try {
             FXMLLoader fxmlLoader = new FXMLLoader();
             switch (choice){
                 case "caution":
@@ -478,8 +485,7 @@ public class Controller implements Initializable {
             dialog.setContentText(content);
             dialog.setResizable(false);
             return dialog;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
@@ -499,8 +505,7 @@ public class Controller implements Initializable {
             if (sFile.isDirectory()){
                 sourceList.getItems().clear();
                 sourceFileDisplay(sFile);
-            }
-            else {
+            } else {
                 sourceListInvalid();
             }
         }
@@ -510,11 +515,37 @@ public class Controller implements Initializable {
             if (dFile.isDirectory()){
                 destList.getItems().clear();
                 destFileDisplay(dFile);
-            }
-            else {
+            } else {
                 destListInvalid();
             }
         }
+    }
+
+    /**
+     *  Tracks currently selected file in the source directory
+     *  ListView
+     *
+     * @param  arg0     top-most node under cursor selected
+     *
+     */
+    @FXML
+    private void handleLogMouseClick(javafx.scene.input.MouseEvent arg0) {
+        System.out.println("LOG: clicked on " + logList.getSelectionModel().getSelectedItem());
+    }
+
+    /**
+     *  Adds new LogItem object to fx:id="logList", subsequently utilizing
+     *  the overridden updateItem  function for cell styling
+     *
+     * @param  text     Text displayed in the log cell
+     * @param  choice   Determines whether action is a source directory
+     *                  change, destination directory change, move,
+     *                  delete, or error
+     *
+     */
+    @FXML
+    private void logAdd(String text, String choice) {
+        logList.getItems().add(new LogItem(text, choice));
     }
 
     /**
@@ -569,6 +600,9 @@ public class Controller implements Initializable {
      *  Called to initialize the controller after the root element
      *  has been completely processed.
      *
+     *  Overrides the fx:id="logList" updateItem function to determine
+     *  cell styling upon insertion.
+     *
      * @param  url location used to resolve relative paths for the
      *             root paths for the root object, or null if the
      *             location is not known
@@ -578,6 +612,50 @@ public class Controller implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        logList.setCellFactory(param -> new ListCell<LogItem>() {
+            @Override
+            protected void updateItem(LogItem item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.getText() == null) {
+                    setText(null);
+                } else {
+                    if (item.getChoice().equals("Source")) {
+                        setText(item.getText());
+                        setStyle("-fx-control-inner-background: green ; -fx-focus-color: green ;");
+                    } else if (item.getChoice().equals("Destination")) {
+                        setText(item.getText());
+                        setStyle("-fx-control-inner-background: green; -fx-focus-color: green ;");
+                    } else if (item.getChoice().equals("Move")) {
+                        setText(item.getText());
+                        setStyle("-fx-control-inner-background: blue; -fx-focus-color: blue ;");
+                    } else if (item.getChoice().equals("Delete")) {
+                        setText(item.getText());
+                        setStyle("-fx-control-inner-background: red; -fx-focus-color: red ;");
+                    } else if (item.getChoice().equals("Error")) {
+                        setText(item.getText());
+                        setStyle("-fx-control-inner-background: red; -fx-focus-color: red ;");
+                    }
+                }
+            }
+        });
+    }
+}
+
+class LogItem {
+    private final StringProperty text;
+    private final StringProperty choice;
+
+    public LogItem(String text, String choice) {
+        this.text = new SimpleStringProperty(text);
+        this.choice = new SimpleStringProperty(choice);
+    }
+
+    public String getText() {
+        return text.get();
+    }
+
+    public String getChoice() {
+        return choice.get();
     }
 
 }

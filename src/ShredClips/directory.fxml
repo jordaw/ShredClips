@@ -8,6 +8,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.media.MediaView?>
 
 <AnchorPane id="AnchorPane" fx:id="anchorId" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ShredClips.Controller">
     <children>
@@ -22,17 +23,18 @@
       <Button fx:id="destButton" layoutX="525.0" layoutY="76.0" mnemonicParsing="false" onAction="#destPathChoice" prefHeight="25.0" prefWidth="61.0" text="Browse" />
       <TextField fx:id="destField" layoutX="14.0" layoutY="76.0" onAction="#destFieldChange" prefHeight="25.0" prefWidth="504.0" />
       <Label layoutX="18.0" layoutY="58.0" prefHeight="17.0" prefWidth="149.0" text="Destination Directory" />
-      <ListView fx:id="sourceList" layoutX="14.0" layoutY="123.0" onMouseClicked="#handleSourceMouseClick" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <ListView fx:id="sourceList" layoutX="14.0" layoutY="123.0" onMouseClicked="#handleSourceMouseClick" opacity="0.75" prefHeight="215.0" prefWidth="156.0" />
       <Label fx:id="invalidSource" layoutX="55.0" layoutY="206.0" text="Invalid Source&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
-      <ListView fx:id="destList" layoutX="14.0" layoutY="358.0" onMouseClicked="#handleDestMouseClick" opacity="0.75" prefHeight="200.0" prefWidth="156.0" />
+      <ListView fx:id="destList" layoutX="14.0" layoutY="373.0" onMouseClicked="#handleDestMouseClick" opacity="0.75" prefHeight="215.0" prefWidth="156.0" />
       <Label fx:id="invalidDest" layoutX="43.0" layoutY="441.0" text="Invalid Destination&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
-      <ButtonBar layoutX="12.0" layoutY="323.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
+      <ButtonBar layoutX="12.0" layoutY="338.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
         <buttons>
           <Button fx:id="deleteFile" alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" onAction="#deleteFileHandle" prefHeight="25.0" text="Delete" />
             <Button fx:id="moveFile" minWidth="66.0" mnemonicParsing="false" onAction="#moveFileHandle" prefHeight="25.0" text="Move" />
         </buttons>
       </ButtonBar>
-      <ButtonBar buttonMinWidth="95.0" layoutX="179.0" layoutY="523.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="400.0">
+      <MediaView fitHeight="225.0" fitWidth="400.0" layoutX="184.0" layoutY="123.0" />
+      <ButtonBar buttonMinWidth="95.0" layoutX="180.0" layoutY="348.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="400.0">
         <buttons>
             <Button mnemonicParsing="false" text="Pause" />
             <Button mnemonicParsing="false" text="Play" />
@@ -40,5 +42,7 @@
           <Button mnemonicParsing="false" text="Backward" />
         </buttons>
       </ButtonBar>
+      <ListView fx:id="logList" layoutX="184.0" layoutY="414.0" onMouseClicked="#handleLogMouseClick" opacity="0.5" prefHeight="174.0" prefWidth="402.0" />
+      <Label layoutX="185.0" layoutY="397.0" prefHeight="17.0" prefWidth="149.0" text="Event Log" />
     </children>
 </AnchorPane>
