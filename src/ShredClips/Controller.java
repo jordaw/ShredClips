@@ -100,6 +100,7 @@ public class Controller implements Initializable {
             logAdd("Source Directory Change: " + file.getAbsolutePath(), "Source");
         } else {
             sourceListInvalid();
+            logAdd("Source Directory Invalid: " + file.getAbsolutePath(), "Error");
         }
     }
 
@@ -145,6 +146,7 @@ public class Controller implements Initializable {
             logAdd("Destination Directory Change: " + file.getAbsolutePath(), "Destination");
         } else {
             destListInvalid();
+            logAdd("Destination Directory Invalid: " + file.getAbsolutePath(), "Error");
         }
     }
 
@@ -507,6 +509,7 @@ public class Controller implements Initializable {
                 sourceFileDisplay(sFile);
             } else {
                 sourceListInvalid();
+                logAdd("Source Directory Invalid: " + sFile.getAbsolutePath(), "Error");
             }
         }
 
@@ -517,6 +520,7 @@ public class Controller implements Initializable {
                 destFileDisplay(dFile);
             } else {
                 destListInvalid();
+                logAdd("Destination Directory Invalid: " + dFile.getAbsolutePath(), "Error");
             }
         }
     }
@@ -619,19 +623,13 @@ public class Controller implements Initializable {
                 if (empty || item == null || item.getText() == null) {
                     setText(null);
                 } else {
-                    if (item.getChoice().equals("Source")) {
+                    if (item.getChoice().equals("Source") || item.getChoice().equals("Destination")) {
                         setText(item.getText());
                         setStyle("-fx-control-inner-background: green ; -fx-focus-color: green ;");
-                    } else if (item.getChoice().equals("Destination")) {
-                        setText(item.getText());
-                        setStyle("-fx-control-inner-background: green; -fx-focus-color: green ;");
                     } else if (item.getChoice().equals("Move")) {
                         setText(item.getText());
                         setStyle("-fx-control-inner-background: blue; -fx-focus-color: blue ;");
-                    } else if (item.getChoice().equals("Delete")) {
-                        setText(item.getText());
-                        setStyle("-fx-control-inner-background: red; -fx-focus-color: red ;");
-                    } else if (item.getChoice().equals("Error")) {
+                    } else if (item.getChoice().equals("Delete") || item.getChoice().equals("Error")) {
                         setText(item.getText());
                         setStyle("-fx-control-inner-background: red; -fx-focus-color: red ;");
                     }
