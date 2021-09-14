@@ -1,6 +1,11 @@
 package ShredClips;
 
 /**Class*/
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 
@@ -10,10 +15,11 @@ import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URL;
 import java.io.File;
+import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import javafx.util.Duration;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.beans.property.SimpleStringProperty;
@@ -21,16 +27,25 @@ import javafx.beans.property.StringProperty;
 
 /**Event*/
 import javafx.event.ActionEvent;
+import javafx.scene.input.MouseEvent;
 
 /**Scene*/
 import javafx.fxml.FXML;
+import javafx.stage.Stage;
+import javafx.stage.DirectoryChooser;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
-import javafx.stage.DirectoryChooser;
-import javafx.scene.control.*;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Slider;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 
 public class Controller implements Initializable {
 
@@ -57,6 +72,18 @@ public class Controller implements Initializable {
 
     @FXML
     private ListView<LogItem> logList;
+
+    @FXML
+    private MediaView mediaView;
+
+    @FXML
+    private StackPane mediaStack;
+
+    @FXML
+    private Slider mediaProgress;
+
+    @FXML
+    private Slider volumeSlider;
 
     /**
      * Initializes the DirectoryChooser object, gets the current stage,
@@ -160,7 +187,6 @@ public class Controller implements Initializable {
      */
     private void sourceFileDisplay(@NotNull File file) {
         sourceList.getItems().clear();
-        System.out.println(Arrays.toString(file.list()));
         for (String fileName : file.list()) {
             sourceList.getItems().add(fileName);
         }
@@ -176,7 +202,8 @@ public class Controller implements Initializable {
     @FXML
     private void handleSourceMouseClick(javafx.scene.input.MouseEvent arg0) {
         destList.getSelectionModel().clearSelection();
-        System.out.println("SOURCE MC: clicked on " + sourceList.getSelectionModel().getSelectedItem());
+        File sourceFile = new File(filePath(sourceField.getCharacters().toString(), sourceList.getSelectionModel().getSelectedItem()));
+        mediaClick(sourceFile);
     }
 
     /**
@@ -189,7 +216,6 @@ public class Controller implements Initializable {
      */
     private void destFileDisplay(@NotNull File file) {
         destList.getItems().clear();
-        System.out.println(Arrays.toString(file.list()));
         for (String fileName : file.list()) {
             destList.getItems().add(fileName);
         }
@@ -205,7 +231,8 @@ public class Controller implements Initializable {
     @FXML
     private void handleDestMouseClick(javafx.scene.input.MouseEvent arg0) {
         sourceList.getSelectionModel().clearSelection();
-        System.out.println("DEST MC: clicked on " + destList.getSelectionModel().getSelectedItem());
+        File destFile = new File(filePath(destField.getCharacters().toString(), destList.getSelectionModel().getSelectedItem()));
+        mediaClick(destFile);
     }
 
     /**
@@ -249,25 +276,24 @@ public class Controller implements Initializable {
             File fromFile = new File(fromPath);
             File toFile = new File(toPath);
             if (toFile.isDirectory() && fromFile.isDirectory()) {
-                Path from = FileSystems.getDefault().getPath(fromPath + "\\" + fileName);
-                Path to = FileSystems.getDefault().getPath(toPath + "\\" + fileName);
+                Path from = FileSystems.getDefault().getPath(filePath(fromPath, fileName));
+                Path to = FileSystems.getDefault().getPath(filePath(toPath, fileName));
                 if (to.toFile().isFile()) {
                     String rename = fileRename(toPath, fileName);
-                    to = FileSystems.getDefault().getPath(toPath + "\\" + rename);
+                    to = FileSystems.getDefault().getPath(filePath(toPath, rename));
                     Dialog dialog = dialogWindow("ShredClips Alert", "Renamed file to " + rename, "caution");
                     dialog.showAndWait();
                     moveFile(from, to, fileName);
                 } else if (to.toFile().isDirectory()) {
                     String rename = directoryRename(toPath, fileName);
-                    to = FileSystems.getDefault().getPath(toPath + "\\" + rename);
+                    to = FileSystems.getDefault().getPath(filePath(toPath, rename));
                     Dialog dialog = dialogWindow("ShredClips Alert", "Renamed directory to " + rename, "caution");
                     dialog.showAndWait();
                     moveFile(from, to, fileName);
                 } else if (!from.equals(to)) {
                     moveFile(from, to, fileName);
                 } else {
-                    Dialog dialog = dialogWindow("ShredClips Alert", "Cannot move selected file to the same directory.", "caution");
-                    dialog.showAndWait();
+                    logAdd("Cannot move " + fileName + " to the same directory.", "Error");
                 }
             } else {
                 refreshListViews();
@@ -289,6 +315,7 @@ public class Controller implements Initializable {
     private void moveFile(Path from, Path to, String fileName) {
         if(from.toFile().isFile()) {
              try {
+                disposeMedia();
                 Files.move(from, to);
                 logAdd("Moved File: " + fileName + " To " + to.toFile().getAbsolutePath(), "Move");
                 refreshListViews();
@@ -322,13 +349,13 @@ public class Controller implements Initializable {
         String extension = fileName.substring(index+1);
         String rename;
 
-        Path newpath = FileSystems.getDefault().getPath(fileDirectory + "\\" + fileName);
+        Path newpath = FileSystems.getDefault().getPath(filePath(fileDirectory, fileName));
         Boolean exists = newpath.toFile().exists();
         int i = 1;
 
         while(exists) {
             rename = file + "_" + i + "." + extension;
-            newpath = FileSystems.getDefault().getPath(fileDirectory + "\\" + rename);
+            newpath = FileSystems.getDefault().getPath(filePath(fileDirectory, rename));
             exists = newpath.toFile().exists();
             if(!exists) {
                 return rename;
@@ -349,13 +376,13 @@ public class Controller implements Initializable {
      */
     private String directoryRename(String dirDirectory, String dirName) {
         String rename = dirName;
-        Path newpath = FileSystems.getDefault().getPath(dirDirectory + "\\" + rename);
+        Path newpath = FileSystems.getDefault().getPath(filePath(dirDirectory, rename));
         Boolean exists = newpath.toFile().exists();
         int i = 1;
 
         while(exists) {
             rename = dirName + "_" + i;
-            newpath = FileSystems.getDefault().getPath(dirDirectory + "\\" + rename);
+            newpath = FileSystems.getDefault().getPath(filePath(dirDirectory, rename));
             exists = newpath.toFile().exists();
             if(!exists) {
                 return rename;
@@ -378,13 +405,12 @@ public class Controller implements Initializable {
         if(!sourceList.getSelectionModel().isEmpty()) {
             String path = sourceField.getCharacters().toString();
             String file = sourceList.getSelectionModel().getSelectedItem();
-            deleteLogic(path, file, "source");
+            deleteLogic(path, file);
         }
         if (!destList.getSelectionModel().isEmpty()) {
-            Path p = FileSystems.getDefault().getPath(destField.getCharacters().toString()+"\\"+destList.getSelectionModel().getSelectedItem());
             String path = destField.getCharacters().toString();
             String file = destList.getSelectionModel().getSelectedItem();
-            deleteLogic(path, file, "dest");
+            deleteLogic(path, file);
         }
     }
 
@@ -396,15 +422,13 @@ public class Controller implements Initializable {
      * @param  path         Directory the object is being deleted
      *                      from
      * @param  fileName     Name of the object
-     * @param  type         Whether the object was selected in the
-     *                      source ListView or destination ListView
      *
      */
-    private void deleteLogic(String path, String fileName, String type) {
+    private void deleteLogic(String path, String fileName) {
         if (!path.isEmpty()) {
             File delFile = new File(path);
             if (delFile.isDirectory()) {
-                Path delPath = FileSystems.getDefault().getPath(path + "\\" + fileName);
+                Path delPath = FileSystems.getDefault().getPath(filePath(path, fileName));
                 if (delPath.toFile().isFile() || delPath.toFile().isDirectory()) {
                     deleteFile(delPath, fileName);
                 }
@@ -432,6 +456,7 @@ public class Controller implements Initializable {
 
             Optional<ButtonType> choice = dialog.showAndWait();
             if (choice.get() == ButtonType.YES) {
+                disposeMedia();
                 try {
                     Desktop.getDesktop().moveToTrash(p.toFile());
                     logAdd("Moved File: " + fileName + " To Recycle Bin", "Delete");
@@ -458,6 +483,17 @@ public class Controller implements Initializable {
                 refreshListViews();
             }
         }
+    }
+
+    /**
+     *  Helper function to append a file's path and file's name
+     *
+     * @param  path         path to the parent directory of file
+     * @param  fileName     name of file appended to the path
+     *
+     */
+    private String filePath(String path, String fileName){
+        return path + "\\" + fileName;
     }
 
     /**
@@ -552,6 +588,218 @@ public class Controller implements Initializable {
         logList.getItems().add(new LogItem(text, choice));
     }
 
+
+    /**
+     * Sets MediaPlayer to state of playing
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="playButton"
+     *
+     */
+    @FXML
+    private void playClick(ActionEvent event) { playMedia(); }
+
+
+    /**
+     * Sets MediaPlayer to state of stalled
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="playButton"
+     *
+     */
+    @FXML
+    private void pauseClick(ActionEvent event) { pauseMedia(); }
+
+
+    /**
+     * Decreases playback rate of MediaPlayer by 0.1 on
+     * each click up until max
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="rwButton"
+     *
+     */
+    @FXML
+    private void rwClick(ActionEvent event) {
+        mediaView.getMediaPlayer().setRate(mediaView.getMediaPlayer().getRate()-0.1);
+    }
+
+    /**
+     * Increases playback rate of MediaPlayer by 0.5 on
+     * each click up until max
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="ffButton"
+     *
+     */
+    @FXML
+    private void ffClick(ActionEvent event) {
+        mediaView.getMediaPlayer().setRate(mediaView.getMediaPlayer().getRate()+0.5);
+    }
+
+    /**
+     * Jumps MediaPlayer playback time back three seconds
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="minusButton"
+     *
+     */
+    @FXML
+    private void minusClick(ActionEvent event) {
+        mediaView.getMediaPlayer().seek(mediaView.getMediaPlayer().getCurrentTime().add(Duration.seconds(-3)));
+    }
+
+    /**
+     * Jumps MediaPlayer playback time ahead three seconds
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="plusButton"
+     *
+     */
+    @FXML
+    private void plusClick(ActionEvent event) {
+        mediaView.getMediaPlayer().seek(mediaView.getMediaPlayer().getCurrentTime().add(Duration.seconds(3)));
+    }
+
+    /**
+     *  Helper function to determine if a passed in file is a
+     *  video or not
+     *
+     * @param  file     utilized to retrieve the abstract file
+     *                  pathname
+     *
+     */
+    private Boolean isVideo(File file) {
+        String type = URLConnection.guessContentTypeFromName(file.toURI().toString());
+        return (type != null && type.startsWith("video"));
+    }
+
+    /**
+     *  Helper function for when fx:id="sourceList" or
+     *  fx:id="destList" is clicked to determine if
+     *  MediaView should be shown
+     *
+     * @param  file     the object currently clicked on
+     *                  in the file ListView
+     *
+     */
+    private void mediaClick(File file) {
+        if (isVideo(file)){
+            mediaPlayerValid();
+            disposeMedia();
+            Media media = new Media(file.toURI().toString());
+            MediaPlayer mediaPlayer = new MediaPlayer(media);
+            mediaView.setMediaPlayer(mediaPlayer);
+            initializeMediaProgressSlider(mediaPlayer, media);
+            initializeMediaVolumeSlider(mediaPlayer);
+            playMedia();
+        }
+        else {
+            mediaPlayerInvalid();
+            disposeMedia();
+        }
+    }
+
+    /**
+     *  Helper function for mediaClick() that sets the default
+     *  value, mouse click functionality, mouse drag
+     *  functionality, and the onReady state of the progress
+     *  slider bar
+     *
+     * @param  mediaPlayer  MediaPlayer object that holds and
+     *                      controls the current Media
+     * @param  media        A media resource
+     *
+     */
+    private void initializeMediaProgressSlider(MediaPlayer mediaPlayer, Media media) {
+        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration duration, Duration t1) {
+                mediaProgress.setValue(t1.toSeconds());
+            }
+        });
+
+        mediaProgress.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(mediaProgress.getValue()));
+            }
+        });
+
+        mediaProgress.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(mediaProgress.getValue()));
+            }
+        });
+
+        mediaPlayer.setOnReady(new Runnable() {
+            @Override
+            public void run() {
+                Duration total = media.getDuration();
+                mediaProgress.setMax(total.toSeconds());
+            }
+        });
+    }
+
+    /**
+     *  Helper function for mediaClick() that sets the default
+     *  value and establishes listener functionality for the
+     *  volume slider bar
+     *
+     * @param  mediaPlayer  MediaPlayer object that holds and
+     *                      controls the current Media
+     *
+     */
+    private void initializeMediaVolumeSlider(MediaPlayer mediaPlayer) {
+        volumeSlider.setValue(mediaPlayer.getVolume() * 100);
+        volumeSlider.valueProperty().addListener(new InvalidationListener() {
+            @Override
+            public void invalidated(Observable observable) {
+                mediaPlayer.setVolume(volumeSlider.getValue()/100);
+            }
+        });
+    }
+
+    /**
+     *  Plays current MediaPlayer held in MediaView
+     *
+     */
+    private void playMedia() {
+        try {
+            mediaView.getMediaPlayer().play();
+        } catch (Exception e) {
+            //no media playing
+        }
+    }
+
+    /**
+     *  Pauses current MediaPlayer held in MediaView
+     *
+     */
+    private void pauseMedia() {
+        try {
+            mediaView.getMediaPlayer().pause();
+        } catch (Exception e) {
+            //no media playing
+        }
+    }
+
+    /**
+     *  Puts MediaPlayer held in MediaView in a state
+     *  of DISPOSED, which frees all resources from
+     *  the player. MediaPlayer SHOULD NOT be used
+     *  again once called.
+     *
+     */
+    private void disposeMedia() {
+        try {
+            mediaView.getMediaPlayer().dispose();
+        } catch (Exception e) {
+            //no media playing
+        }
+    }
+
     /**
      *  Displays red highlighting CSS around the TextField
      *  fx:id="sourceField" and shows fx:id="invalidSource" error
@@ -601,6 +849,26 @@ public class Controller implements Initializable {
     }
 
     /**
+     * Sets the VBox encapsulating the MediaView and related
+     * buttons to invisible
+     *
+     */
+    @FXML
+    private void mediaPlayerInvalid() {
+        mediaStack.setVisible(false);
+    }
+
+    /**
+     * Sets the VBox encapsulating the MediaView and related
+     * buttons to visible
+     *
+     */
+    @FXML
+    private void mediaPlayerValid() {
+        mediaStack.setVisible(true);
+    }
+
+    /**
      *  Called to initialize the controller after the root element
      *  has been completely processed.
      *
@@ -623,16 +891,8 @@ public class Controller implements Initializable {
                 if (empty || item == null || item.getText() == null) {
                     setText(null);
                 } else {
-                    if (item.getChoice().equals("Source") || item.getChoice().equals("Destination")) {
-                        setText(item.getText());
-                        setStyle("-fx-control-inner-background: green ; -fx-focus-color: green ;");
-                    } else if (item.getChoice().equals("Move")) {
-                        setText(item.getText());
-                        setStyle("-fx-control-inner-background: blue; -fx-focus-color: blue ;");
-                    } else if (item.getChoice().equals("Delete") || item.getChoice().equals("Error")) {
-                        setText(item.getText());
-                        setStyle("-fx-control-inner-background: red; -fx-focus-color: red ;");
-                    }
+                    setText(item.getText());
+                    setStyle(item.getCSS());
                 }
             }
         });
@@ -642,18 +902,31 @@ public class Controller implements Initializable {
 class LogItem {
     private final StringProperty text;
     private final StringProperty choice;
+    private final StringProperty css;
 
     public LogItem(String text, String choice) {
         this.text = new SimpleStringProperty(text);
         this.choice = new SimpleStringProperty(choice);
+        this.css = new SimpleStringProperty(setCSS(choice));
     }
 
     public String getText() {
         return text.get();
     }
 
-    public String getChoice() {
-        return choice.get();
-    }
+    public String getChoice() { return choice.get(); }
 
+    public String getCSS() { return css.get(); }
+
+    private String setCSS(String choice) {
+        String setCSS = null;
+        if (choice.equals("Source") || choice.equals("Destination")) {
+            setCSS = "-fx-control-inner-background: green ; -fx-focus-color: green ;";
+        } else if (choice.equals("Move")) {
+            setCSS = "-fx-control-inner-background: blue; -fx-focus-color: blue ;";
+        } else if (choice.equals("Delete") || choice.equals("Error")) {
+            setCSS = "-fx-control-inner-background: red; -fx-focus-color: red ;";
+        }
+        return setCSS;
+    }
 }

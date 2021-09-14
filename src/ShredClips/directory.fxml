@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.media.MediaView?>
 
 <AnchorPane id="AnchorPane" fx:id="anchorId" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ShredClips.Controller">
@@ -33,15 +37,31 @@
             <Button fx:id="moveFile" minWidth="66.0" mnemonicParsing="false" onAction="#moveFileHandle" prefHeight="25.0" text="Move" />
         </buttons>
       </ButtonBar>
-      <MediaView fitHeight="225.0" fitWidth="400.0" layoutX="184.0" layoutY="123.0" />
-      <ButtonBar buttonMinWidth="95.0" layoutX="180.0" layoutY="348.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0" prefWidth="400.0">
-        <buttons>
-            <Button mnemonicParsing="false" text="Pause" />
-            <Button mnemonicParsing="false" text="Play" />
-            <Button mnemonicParsing="false" text="Forward" />
-          <Button mnemonicParsing="false" text="Backward" />
-        </buttons>
-      </ButtonBar>
+      <StackPane fx:id="mediaStack" layoutX="185.0" layoutY="123.0" prefHeight="400.0" prefWidth="400.0">
+         <children>
+            <MediaView fx:id="mediaView" fitHeight="225.0" fitWidth="400.0" translateY="-90.0" />
+            <Slider fx:id="mediaProgress" maxWidth="400.0" translateY="30.0">
+               <padding>
+                  <Insets bottom="2.0" />
+               </padding>
+            </Slider>
+            <HBox maxHeight="30.0" prefHeight="30.0" prefWidth="400.0" spacing="10.0" translateY="55.0">
+               <children>
+                  <Button fx:id="playButton" mnemonicParsing="false" onAction="#playClick" text="Play" />
+                  <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseClick" text="Pause" />
+                   <Button fx:id="rwButton" mnemonicParsing="false" onAction="#rwClick" text="&lt;&lt;&lt;" />
+                  <Button fx:id="ffButton" mnemonicParsing="false" onAction="#ffClick" text="&gt;&gt;&gt;" />
+                  <Button fx:id="minusButton" mnemonicParsing="false" onAction="#minusClick" text="-3s" />
+                  <Button fx:id="plusButton" mnemonicParsing="false" onAction="#plusClick" text="+3s" />
+                  <Slider fx:id="volumeSlider" maxWidth="104.0">
+                     <padding>
+                        <Insets top="6.0" />
+                     </padding>
+                  </Slider>
+               </children>
+            </HBox>
+         </children>
+      </StackPane>
       <ListView fx:id="logList" layoutX="184.0" layoutY="414.0" onMouseClicked="#handleLogMouseClick" opacity="0.5" prefHeight="174.0" prefWidth="402.0" />
       <Label layoutX="185.0" layoutY="397.0" prefHeight="17.0" prefWidth="149.0" text="Event Log" />
     </children>
