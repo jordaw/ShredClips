@@ -5,6 +5,8 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -13,15 +15,18 @@ import javafx.fxml.Initializable;
 import org.jetbrains.annotations.NotNull;
 import java.awt.Desktop;
 import java.io.IOException;
-import java.net.URL;
 import java.io.File;
+import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import javafx.util.Duration;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -46,6 +51,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class Controller implements Initializable {
 
@@ -65,10 +72,10 @@ public class Controller implements Initializable {
     private Label invalidDest;
 
     @FXML
-    private ListView<String> sourceList;
+    private ListView<DirectoryItem> sourceList;
 
     @FXML
-    private ListView<String> destList;
+    private ListView<DirectoryItem> destList;
 
     @FXML
     private ListView<LogItem> logList;
@@ -84,6 +91,12 @@ public class Controller implements Initializable {
 
     @FXML
     private Slider volumeSlider;
+
+    @FXML
+    private ImageView imageView;
+
+    @FXML
+    private StackPane imageStack;
 
     /**
      * Initializes the DirectoryChooser object, gets the current stage,
@@ -187,8 +200,9 @@ public class Controller implements Initializable {
      */
     private void sourceFileDisplay(@NotNull File file) {
         sourceList.getItems().clear();
+        sourceList.getItems().add(new DirectoryItem("..", file.getPath()));
         for (String fileName : file.list()) {
-            sourceList.getItems().add(fileName);
+            sourceList.getItems().add(new DirectoryItem(fileName, sourceField.getCharacters().toString()));
         }
     }
 
@@ -202,8 +216,11 @@ public class Controller implements Initializable {
     @FXML
     private void handleSourceMouseClick(javafx.scene.input.MouseEvent arg0) {
         destList.getSelectionModel().clearSelection();
-        File sourceFile = new File(filePath(sourceField.getCharacters().toString(), sourceList.getSelectionModel().getSelectedItem()));
-        mediaClick(sourceFile);
+        try {
+            mediaClick(sourceList.getSelectionModel().getSelectedItem().getFullPath().toFile());
+        } catch (Exception e) {
+            //false error on double click
+        }
     }
 
     /**
@@ -216,8 +233,9 @@ public class Controller implements Initializable {
      */
     private void destFileDisplay(@NotNull File file) {
         destList.getItems().clear();
+        destList.getItems().add(new DirectoryItem("..", file.getPath()));
         for (String fileName : file.list()) {
-            destList.getItems().add(fileName);
+            destList.getItems().add(new DirectoryItem(fileName, destField.getCharacters().toString()));
         }
     }
 
@@ -231,9 +249,13 @@ public class Controller implements Initializable {
     @FXML
     private void handleDestMouseClick(javafx.scene.input.MouseEvent arg0) {
         sourceList.getSelectionModel().clearSelection();
-        File destFile = new File(filePath(destField.getCharacters().toString(), destList.getSelectionModel().getSelectedItem()));
-        mediaClick(destFile);
+        try {
+            mediaClick(destList.getSelectionModel().getSelectedItem().getFullPath().toFile());
+        } catch (Exception e) {
+            //false error on double click
+        }
     }
+
 
     /**
      * Detects ListView selected item, gets the path for both the file
@@ -246,17 +268,16 @@ public class Controller implements Initializable {
      */
     @FXML
     private void moveFileHandle(ActionEvent event) {
+        DirectoryItem file;
         if(!sourceList.getSelectionModel().isEmpty()) {
-            String from = sourceField.getCharacters().toString();
+            file = sourceList.getSelectionModel().getSelectedItem();
             String to = destField.getCharacters().toString();
-            String file = sourceList.getSelectionModel().getSelectedItem();
-            moveLogic(from, to, file);
+            moveLogic(file.getPath(), to, file.getFileName());
         }
         if(!destList.getSelectionModel().isEmpty()) {
-            String from = destField.getCharacters().toString();
+            file = destList.getSelectionModel().getSelectedItem();
             String to = sourceField.getCharacters().toString();
-            String file = destList.getSelectionModel().getSelectedItem();
-            moveLogic(from, to, file);
+            moveLogic(file.getPath(), to, file.getFileName());
         }
     }
 
@@ -315,12 +336,12 @@ public class Controller implements Initializable {
     private void moveFile(Path from, Path to, String fileName) {
         if(from.toFile().isFile()) {
              try {
-                disposeMedia();
+                invalidMedia();
                 Files.move(from, to);
                 logAdd("Moved File: " + fileName + " To " + to.toFile().getAbsolutePath(), "Move");
                 refreshListViews();
             } catch (IOException e) {
-                e.printStackTrace();
+                 logAdd("Unable to Move File: " + fileName, "Error");
             }
         }
         if(from.toFile().isDirectory()) {
@@ -403,14 +424,12 @@ public class Controller implements Initializable {
     @FXML
     private void deleteFileHandle(ActionEvent event) {
         if(!sourceList.getSelectionModel().isEmpty()) {
-            String path = sourceField.getCharacters().toString();
-            String file = sourceList.getSelectionModel().getSelectedItem();
-            deleteLogic(path, file);
+            DirectoryItem file = sourceList.getSelectionModel().getSelectedItem();
+            deleteLogic(file.getPath(), file.getFileName());
         }
         if (!destList.getSelectionModel().isEmpty()) {
-            String path = destField.getCharacters().toString();
-            String file = destList.getSelectionModel().getSelectedItem();
-            deleteLogic(path, file);
+            DirectoryItem file = destList.getSelectionModel().getSelectedItem();
+            deleteLogic(file.getPath(), file.getFileName());
         }
     }
 
@@ -456,7 +475,7 @@ public class Controller implements Initializable {
 
             Optional<ButtonType> choice = dialog.showAndWait();
             if (choice.get() == ButtonType.YES) {
-                disposeMedia();
+                invalidMedia();
                 try {
                     Desktop.getDesktop().moveToTrash(p.toFile());
                     logAdd("Moved File: " + fileName + " To Recycle Bin", "Delete");
@@ -565,6 +584,43 @@ public class Controller implements Initializable {
      *  Tracks currently selected file in the source directory
      *  ListView
      *
+     * @param  item     Currently selected DirectoryItem object
+     *                  utilized to determine if the user has
+     *                  selected a directory or to navigate
+     *                  up one directory level
+     *
+     */
+    public void directoryChange(DirectoryItem item) {
+        if(item.getFileName().equals("..")){
+            int i = item.getPath().lastIndexOf('\\');
+            String back = item.getPath().substring(0,i);
+            long count = back.chars().filter(ch -> ch == '\\').count();
+            if (count <= 1) {
+                String seperator ="\\";
+                String[] drive = back.split(Pattern.quote(seperator));
+                back = drive[0].concat(seperator);
+            }
+            if (!sourceList.getSelectionModel().isEmpty()) {
+                sourceField.setText(back);
+            }
+            if (!destList.getSelectionModel().isEmpty()) {
+                destField.setText(back);
+            }
+        }
+        else if (item.getFullPath().toFile().isDirectory()) {
+            if (!sourceList.getSelectionModel().isEmpty()) {
+                sourceField.setText(filePath(item.getPath(), item.getFileName()));
+            }
+            if (!destList.getSelectionModel().isEmpty()) {
+                destField.setText(filePath(item.getPath(), item.getFileName()));
+            }
+        }
+        refreshListViews();
+    }
+
+    /**
+     *  Tracks currently selected file in the event log ListView
+     *
      * @param  arg0     top-most node under cursor selected
      *
      */
@@ -583,7 +639,6 @@ public class Controller implements Initializable {
      *                  delete, or error
      *
      */
-    @FXML
     private void logAdd(String text, String choice) {
         logList.getItems().add(new LogItem(text, choice));
     }
@@ -597,7 +652,10 @@ public class Controller implements Initializable {
      *
      */
     @FXML
-    private void playClick(ActionEvent event) { playMedia(); }
+    private void playClick(ActionEvent event) {
+        mediaView.getMediaPlayer().setRate(1);
+        playMedia();
+    }
 
 
     /**
@@ -662,6 +720,52 @@ public class Controller implements Initializable {
     }
 
     /**
+     * Handles user input for selecting the last available image file
+     * to display in the ImageView. Chooses strictly image files in
+     * the selected ListView and iterates through them.
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="backwardsButton"
+     *
+     */
+    @FXML
+    private void backwardClick(ActionEvent event) {
+        if (!sourceList.getSelectionModel().isEmpty()) {
+            DirectoryItem lastImage = getLastImage(sourceList.getItems(), sourceList.getSelectionModel().getSelectedItem());
+            sourceList.getSelectionModel().select(lastImage);
+            imageView.setImage(new Image(lastImage.getFullPath().toFile().toURI().toString()));
+        }
+        if (!destList.getSelectionModel().isEmpty()) {
+            DirectoryItem lastImage = getLastImage(destList.getItems(), destList.getSelectionModel().getSelectedItem());
+            destList.getSelectionModel().select(lastImage);
+            imageView.setImage(new Image(lastImage.getFullPath().toFile().toURI().toString()));
+        }
+    }
+
+    /**
+     * Handles user input for selecting the next available image file
+     * to display in the ImageView. Chooses strictly image files in
+     * the selected ListView and iterates through them.
+     *
+     * @param  event    an ActionEvent triggered when the user clicks
+     *                  the fx:id="forwardButton"
+     *
+     */
+    @FXML
+    private void forwardClick(ActionEvent event) {
+        if (!sourceList.getSelectionModel().isEmpty()) {
+            DirectoryItem nextImage = getNextImage(sourceList.getItems(), sourceList.getSelectionModel().getSelectedItem());
+            sourceList.getSelectionModel().select(nextImage);
+            imageView.setImage(new Image(nextImage.getFullPath().toFile().toURI().toString()));
+        }
+        if (!destList.getSelectionModel().isEmpty()) {
+            DirectoryItem nextImage = getNextImage(destList.getItems(), destList.getSelectionModel().getSelectedItem());
+            destList.getSelectionModel().select(nextImage);
+            imageView.setImage(new Image(nextImage.getFullPath().toFile().toURI().toString()));
+        }
+    }
+
+    /**
      *  Helper function to determine if a passed in file is a
      *  video or not
      *
@@ -675,6 +779,80 @@ public class Controller implements Initializable {
     }
 
     /**
+     *  Helper function to determine if a passed in file is an
+     *  image or not
+     *
+     * @param  file     utilized to retrieve the abstract file
+     *                  pathname
+     *
+     */
+    private Boolean isImage(File file) {
+        String type = URLConnection.guessContentTypeFromName(file.toURI().toString());
+        return (type != null && type.startsWith("image"));
+    }
+
+    /**
+     *  Returns a list of all the image files in the currently
+     *  selected directory ListView
+     *
+     * @param  items    List of all DirectoryList objects
+     *                  in the currently selected directory
+     *                  ListView
+     *
+     */
+    private ObservableList<DirectoryItem> getImageList(ObservableList<DirectoryItem> items) {
+        ObservableList<DirectoryItem> images = FXCollections.observableArrayList();
+        for (DirectoryItem item : items) {
+            if (isImage(item.getFullPath().toFile())) {
+                images.add(item);
+            }
+        }
+        return images;
+    }
+
+    /**
+     *  Iterates forward over the ObservableList of images
+     *  in the currently selected directory ListView. Loops
+     *  back to the top of the list if at the end
+     *
+     * @param  items    ObservableList of images given by
+     *                  getImageList()
+     * @param  item     DirectoryItem object of the currently
+     *                  selected image
+     *
+     */
+    private DirectoryItem getNextImage (ObservableList<DirectoryItem> items, DirectoryItem item) {
+        ObservableList<DirectoryItem> images = getImageList(items);
+        int i = images.indexOf(item);
+        if (i == images.size()-1) {
+            i = 0;
+        }
+        else { ++i; }
+        return images.get(i);
+    }
+
+    /**
+     *  Iterates backwards over the ObservableList of images
+     *  in the currently selected directory ListView. Loops
+     *  to the end of the list if at the top
+     *
+     * @param  items    ObservableList of images given by
+     *                  getImageList()
+     * @param  item     DirectoryItem object of the currently
+     *                  selected image
+     *
+     */
+    private DirectoryItem getLastImage (ObservableList<DirectoryItem> items, DirectoryItem item) {
+        ObservableList<DirectoryItem> images = getImageList(items);
+        int i = images.indexOf(item);
+        if (i == 0) {
+            i = images.size()-1;
+        }
+        else { --i; }
+        return images.get(i);
+    }
+
+    /**
      *  Helper function for when fx:id="sourceList" or
      *  fx:id="destList" is clicked to determine if
      *  MediaView should be shown
@@ -684,7 +862,8 @@ public class Controller implements Initializable {
      *
      */
     private void mediaClick(File file) {
-        if (isVideo(file)){
+        if (isVideo(file)) {
+            imageViewInvalid();
             mediaPlayerValid();
             disposeMedia();
             Media media = new Media(file.toURI().toString());
@@ -694,9 +873,13 @@ public class Controller implements Initializable {
             initializeMediaVolumeSlider(mediaPlayer);
             playMedia();
         }
-        else {
+        else if (isImage(file)) {
             mediaPlayerInvalid();
-            disposeMedia();
+            imageViewValid();
+            imageView.setImage(new Image(file.toURI().toString()));
+        }
+        else {
+            invalidMedia();
         }
     }
 
@@ -808,6 +991,9 @@ public class Controller implements Initializable {
      */
     @FXML
     private void sourceListInvalid() {
+        if (!sourceList.getSelectionModel().isEmpty()) {
+            invalidMedia();
+        }
         sourceField.setStyle("-fx-text-box-border: red ; -fx-focus-color: red ;");
         invalidSource.setVisible(true);
         sourceList.getItems().clear();
@@ -821,6 +1007,9 @@ public class Controller implements Initializable {
      */
     @FXML
     private void destListInvalid() {
+        if (!destList.getSelectionModel().isEmpty()) {
+            invalidMedia();
+        }
         destField.setStyle("-fx-text-box-border: red ; -fx-focus-color: red ;");
         invalidDest.setVisible(true);
         destList.getItems().clear();
@@ -849,23 +1038,55 @@ public class Controller implements Initializable {
     }
 
     /**
-     * Sets the VBox encapsulating the MediaView and related
+     * Sets the StackPane encapsulating the MediaView and related
      * buttons to invisible
      *
      */
     @FXML
     private void mediaPlayerInvalid() {
+        disposeMedia();
         mediaStack.setVisible(false);
     }
 
     /**
-     * Sets the VBox encapsulating the MediaView and related
+     * Sets the StackPane encapsulating the MediaView and related
      * buttons to visible
      *
      */
     @FXML
     private void mediaPlayerValid() {
         mediaStack.setVisible(true);
+    }
+
+    /**
+     * Sets the StackPane encapsulating the ImageView and related
+     * buttons to invisible
+     *
+     */
+    @FXML
+    private void imageViewInvalid() {
+        imageStack.setVisible(false);
+    }
+
+    /**
+     * Sets the StackPane encapsulating the ImageView and related
+     * buttons to visible
+     *
+     */
+    @FXML
+    private void imageViewValid() {
+        imageStack.setVisible(true);
+    }
+
+    /**
+     * Sets the StackPane encapsulating both the MediaPlayer and
+     * the ImageView to invisible and disposes of media.
+     *
+     */
+    @FXML
+    private void invalidMedia() {
+        mediaPlayerInvalid();
+        imageViewInvalid();
     }
 
     /**
@@ -896,6 +1117,70 @@ public class Controller implements Initializable {
                 }
             }
         });
+
+        sourceList.setCellFactory(param -> new ListCell<DirectoryItem>() {
+            @Override
+            protected void updateItem(DirectoryItem item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.getFileName() == null) {
+                    setText(null);
+                    setOnMouseClicked(null);
+                } else {
+                    setText(item.getFileName());
+                    setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent event) {
+                            if(event.getClickCount() > 1){
+                                directoryChange(getItem());
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        destList.setCellFactory(param -> new ListCell<DirectoryItem>() {
+            @Override
+            protected void updateItem(DirectoryItem item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.getFileName() == null) {
+                    setText(null);
+                    setOnMouseClicked(null);
+                } else {
+                    setText(item.getFileName());
+                    setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent event) {
+                            if(event.getClickCount() > 1){
+                                directoryChange(getItem());
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+}
+
+class DirectoryItem {
+    private final StringProperty fileName;
+    private final StringProperty filePath;
+    private final Path fullPath;
+
+    public DirectoryItem(String file, String path) {
+        this.fileName = new SimpleStringProperty(file);
+        this.filePath = new SimpleStringProperty(path);
+        this.fullPath = initializeFullPath(path, file);
+    }
+
+    public String getFileName() { return fileName.get(); }
+
+    public String getPath() { return filePath.get(); }
+
+    public Path getFullPath() { return fullPath; }
+
+    private Path initializeFullPath(String path, String filename) {
+        return Paths.get(path, filename);
     }
 }
 
@@ -919,14 +1204,13 @@ class LogItem {
     public String getCSS() { return css.get(); }
 
     private String setCSS(String choice) {
-        String setCSS = null;
         if (choice.equals("Source") || choice.equals("Destination")) {
-            setCSS = "-fx-control-inner-background: green ; -fx-focus-color: green ;";
+            return "-fx-control-inner-background: green ; -fx-focus-color: green ;";
         } else if (choice.equals("Move")) {
-            setCSS = "-fx-control-inner-background: blue; -fx-focus-color: blue ;";
+            return "-fx-control-inner-background: blue; -fx-focus-color: blue ;";
         } else if (choice.equals("Delete") || choice.equals("Error")) {
-            setCSS = "-fx-control-inner-background: red; -fx-focus-color: red ;";
+            return "-fx-control-inner-background: red; -fx-focus-color: red ;";
         }
-        return setCSS;
+        return null;
     }
 }

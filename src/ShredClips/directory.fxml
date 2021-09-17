@@ -28,40 +28,51 @@
       <TextField fx:id="destField" layoutX="14.0" layoutY="76.0" onAction="#destFieldChange" prefHeight="25.0" prefWidth="504.0" />
       <Label layoutX="18.0" layoutY="58.0" prefHeight="17.0" prefWidth="149.0" text="Destination Directory" />
       <ListView fx:id="sourceList" layoutX="14.0" layoutY="123.0" onMouseClicked="#handleSourceMouseClick" opacity="0.75" prefHeight="215.0" prefWidth="156.0" />
-      <Label fx:id="invalidSource" layoutX="55.0" layoutY="206.0" text="Invalid Source&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
+      <Label fx:id="invalidSource" layoutX="55.0" layoutY="215.0" text="Invalid Source&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
       <ListView fx:id="destList" layoutX="14.0" layoutY="373.0" onMouseClicked="#handleDestMouseClick" opacity="0.75" prefHeight="215.0" prefWidth="156.0" />
-      <Label fx:id="invalidDest" layoutX="43.0" layoutY="441.0" text="Invalid Destination&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
+      <Label fx:id="invalidDest" layoutX="42.0" layoutY="464.0" text="Invalid Destination&#10;Directory" textAlignment="CENTER" textFill="#bfbfbf" visible="false" />
       <ButtonBar layoutX="12.0" layoutY="338.0" nodeOrientation="RIGHT_TO_LEFT" prefHeight="34.0" prefWidth="175.0">
         <buttons>
           <Button fx:id="deleteFile" alignment="CENTER" contentDisplay="CENTER" minWidth="66.0" mnemonicParsing="false" onAction="#deleteFileHandle" prefHeight="25.0" text="Delete" />
             <Button fx:id="moveFile" minWidth="66.0" mnemonicParsing="false" onAction="#moveFileHandle" prefHeight="25.0" text="Move" />
         </buttons>
       </ButtonBar>
-      <StackPane fx:id="mediaStack" layoutX="185.0" layoutY="123.0" prefHeight="400.0" prefWidth="400.0">
-         <children>
+      <StackPane fx:id="mediaStack" layoutX="185.0" layoutY="123.0" prefHeight="400.0" prefWidth="400.0" visible="false">
+        <children>
             <MediaView fx:id="mediaView" fitHeight="225.0" fitWidth="400.0" translateY="-90.0" />
             <Slider fx:id="mediaProgress" maxWidth="400.0" translateY="30.0">
-               <padding>
-                  <Insets bottom="2.0" />
-               </padding>
+                <padding>
+                    <Insets bottom="2.0" />
+                </padding>
             </Slider>
             <HBox maxHeight="30.0" prefHeight="30.0" prefWidth="400.0" spacing="10.0" translateY="55.0">
-               <children>
-                  <Button fx:id="playButton" mnemonicParsing="false" onAction="#playClick" text="Play" />
-                  <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseClick" text="Pause" />
-                   <Button fx:id="rwButton" mnemonicParsing="false" onAction="#rwClick" text="&lt;&lt;&lt;" />
-                  <Button fx:id="ffButton" mnemonicParsing="false" onAction="#ffClick" text="&gt;&gt;&gt;" />
-                  <Button fx:id="minusButton" mnemonicParsing="false" onAction="#minusClick" text="-3s" />
-                  <Button fx:id="plusButton" mnemonicParsing="false" onAction="#plusClick" text="+3s" />
-                  <Slider fx:id="volumeSlider" maxWidth="104.0">
-                     <padding>
-                        <Insets top="6.0" />
-                     </padding>
-                  </Slider>
-               </children>
+                <children>
+                    <Button fx:id="playButton" mnemonicParsing="false" onAction="#playClick" text="Play" />
+                    <Button fx:id="pauseButton" mnemonicParsing="false" onAction="#pauseClick" text="Pause" />
+                    <Button fx:id="rwButton" mnemonicParsing="false" onAction="#rwClick" text="&lt;&lt;&lt;" />
+                    <Button fx:id="ffButton" mnemonicParsing="false" onAction="#ffClick" text="&gt;&gt;&gt;" />
+                    <Button fx:id="minusButton" mnemonicParsing="false" onAction="#minusClick" text="-3s" />
+                    <Button fx:id="plusButton" mnemonicParsing="false" onAction="#plusClick" text="+3s" />
+                    <Slider fx:id="volumeSlider" maxWidth="104.0">
+                        <padding>
+                            <Insets top="6.0" />
+                        </padding>
+                    </Slider>
+                </children>
             </HBox>
-         </children>
-      </StackPane>
+        </children>
+    </StackPane>
+        <StackPane fx:id="imageStack" layoutX="185.0" layoutY="123.0" prefHeight="400.0" prefWidth="400.0" visible="false">
+            <children>
+                <ImageView fx:id="imageView" fitHeight="237.0" fitWidth="400.0" layoutX="-90.0" layoutY="-90.0" preserveRatio="true" StackPane.alignment="TOP_CENTER" />
+                <HBox alignment="CENTER" maxHeight="30.0" prefHeight="30.0" prefWidth="400.0" spacing="10.0" translateY="55.0">
+                    <children>
+                        <Button fx:id="backwardsButton" mnemonicParsing="false" onAction="#backwardClick" text="&lt;" />
+                        <Button fx:id="forwardButton" mnemonicParsing="false" onAction="#forwardClick" text="&gt;" />
+                    </children>
+                </HBox>
+            </children>
+        </StackPane>
       <ListView fx:id="logList" layoutX="184.0" layoutY="414.0" onMouseClicked="#handleLogMouseClick" opacity="0.5" prefHeight="174.0" prefWidth="402.0" />
       <Label layoutX="185.0" layoutY="397.0" prefHeight="17.0" prefWidth="149.0" text="Event Log" />
     </children>
