@@ -21,14 +21,10 @@ import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javafx.util.Duration;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
-
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 
 /**Event*/
 import javafx.event.ActionEvent;
@@ -639,9 +635,7 @@ public class Controller implements Initializable {
      *                  delete, or error
      *
      */
-    private void logAdd(String text, String choice) {
-        logList.getItems().add(new LogItem(text, choice));
-    }
+    private void logAdd(String text, String choice) { logList.getItems().add(new LogItem(text, choice)); }
 
 
     /**
@@ -1159,58 +1153,5 @@ public class Controller implements Initializable {
                 }
             }
         });
-    }
-}
-
-class DirectoryItem {
-    private final StringProperty fileName;
-    private final StringProperty filePath;
-    private final Path fullPath;
-
-    public DirectoryItem(String file, String path) {
-        this.fileName = new SimpleStringProperty(file);
-        this.filePath = new SimpleStringProperty(path);
-        this.fullPath = initializeFullPath(path, file);
-    }
-
-    public String getFileName() { return fileName.get(); }
-
-    public String getPath() { return filePath.get(); }
-
-    public Path getFullPath() { return fullPath; }
-
-    private Path initializeFullPath(String path, String filename) {
-        return Paths.get(path, filename);
-    }
-}
-
-class LogItem {
-    private final StringProperty text;
-    private final StringProperty choice;
-    private final StringProperty css;
-
-    public LogItem(String text, String choice) {
-        this.text = new SimpleStringProperty(text);
-        this.choice = new SimpleStringProperty(choice);
-        this.css = new SimpleStringProperty(setCSS(choice));
-    }
-
-    public String getText() {
-        return text.get();
-    }
-
-    public String getChoice() { return choice.get(); }
-
-    public String getCSS() { return css.get(); }
-
-    private String setCSS(String choice) {
-        if (choice.equals("Source") || choice.equals("Destination")) {
-            return "-fx-control-inner-background: green ; -fx-focus-color: green ;";
-        } else if (choice.equals("Move")) {
-            return "-fx-control-inner-background: blue; -fx-focus-color: blue ;";
-        } else if (choice.equals("Delete") || choice.equals("Error")) {
-            return "-fx-control-inner-background: red; -fx-focus-color: red ;";
-        }
-        return null;
     }
 }
