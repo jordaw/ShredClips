@@ -5,7 +5,7 @@
 <p align="center">A convenient media player made for content creators, by a content creator</p>
 
 <div align="center">
-        <img src="https://github.com/jordaw/README-Assets/blob/master/example.png" />
+        <img src="src/example.png" />
 </div>
 
 ## Features
